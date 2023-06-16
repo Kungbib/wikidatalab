@@ -1,0 +1,9 @@
+*.pyc
+.DS_Store
+.mypy_cache/
+*.sw[j-p]
+.idea
+*.iml
+
+/cache
+/_dev
