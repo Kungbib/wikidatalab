@@ -77,7 +77,7 @@ def process_terms(term_doc: dict, vocmap: dict, *, isclass=False, lang='en'):
         terms[term_id] = {"matches": rdbl_term}
 
 
-def label_to_term(label: str) -> str:
+def clean_characters(label: str) -> str:
     term = label
 
     for frm, to in [
@@ -94,7 +94,11 @@ def label_to_term(label: str) -> str:
         c for c in unicodedata.normalize('NFD', term) if unicodedata.category(c) != 'Mn'
     )
 
-    term = re.sub(r'[+"\'.()!?–‘’\xc2\xa0\n,]', '', term)
+    return re.sub(r'[+"\'.()!?–‘’\xc2\xa0\n,]', '', term)
+
+
+def label_to_term(label: str) -> str:
+    term = clean_characters(label)
 
     wprop, *parts = term.split('_')
     term = ''.join(x[0].upper() + x[1:].lower() for x in parts if x.strip())

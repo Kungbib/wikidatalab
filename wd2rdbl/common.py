@@ -1,4 +1,4 @@
-from trld.jsonld.base import (CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANGUAGE,
+from trld.jsonld.keys import (CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANGUAGE,
                               TYPE, REVERSE, VALUE, VOCAB)
 
 ANNOTATION = '@annotation'

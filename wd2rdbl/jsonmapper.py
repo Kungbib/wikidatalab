@@ -6,11 +6,11 @@ from .common import *
 
 class Mapper:
 
-    ctx: dict[str, object]
+    base: str
     prefixes: dict[str, str]
+    term_map: dict[str, str]
 
     def __init__(self, vocmap: dict):
-        ctx = vocmap[CONTEXT]
         self.base = WD
         self.prefixes = DEFAULT_CONTEXT | {VOCAB: WD2RDBL}
         self.term_map = {
@@ -91,7 +91,7 @@ class Mapper:
                 for qvalue in aslist(qvalues)
                 if qvalue.get('rank', 'normal') == 'normal'
                 and qvalue['mainsnak']['snaktype'] != 'novalue'
-                # TODO: '@quoted' if not normal?
+                # TODO: '@quoted' if not normal? Store rank too.
             ]
 
             yield prop, objects
