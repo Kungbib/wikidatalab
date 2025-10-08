@@ -17,10 +17,13 @@ DEFAULT_CONTEXT = {
 }
 
 WD = "http://www.wikidata.org/entity/"
+WD_STMT = "http://www.wikidata.org/entity/statement/"
 WDCOMMONS = "http://commons.wikimedia.org/entity/"
 WD_DATA = "https://www.wikidata.org/wiki/Special:EntityData/"
 
 WD2RDBL = "https://kungbib.github.io/wd2rdbl/ns/"
+
+USER_AGENT = 'WD2RDBL/0.1 (https://libris.github.io/wikidatalab/; niklas.lindstrom@kb.se)'
 
 
 def aslist(v) -> list:

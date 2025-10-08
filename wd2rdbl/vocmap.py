@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 from trld.api import parse_rdf
-from trld.jsonld.base import (CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANGUAGE,
+from trld.jsonld.keys import (CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANGUAGE,
                               TYPE, REVERSE, VALUE, VOCAB)
 
 from .common import DEFAULT_CONTEXT, aslist
