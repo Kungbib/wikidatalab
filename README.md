@@ -14,26 +14,41 @@ with these by using
 [RDF 1.2 annotations](https://www.w3.org/TR/rdf12-concepts/#dfn-triple-annotation).
 
 ### Example Output (Excerpt)
+
 ```turtle
 <http://www.wikidata.org/entity/Q102071> a sdo:Person ;
+  rdfs:label "Tove Jansson"@es ,
+    "Tove Janssonová"@cs ,
+    "Туве Янсон"@bg ,
+    "توفي يانسون"@ar ;
   sdo:name "Jansson, Tove"@sv
-      {| a :Qualification ; sdo:alternateName "Ânson, Tuve", "Ânsson, Tuve", "Jānsone, Tūve", "يانسون، توفا" |}
+      {| a :Qualification ;
+        sdo:alternateName "Jānsone, Tūve" ,
+          "Ânson, Tuve" ,
+          "Ânsson, Tuve" ,
+          "يانسون، توفا"
+      |}
       ~ wdref:8566348fa77729d56b55c24bd29f18f5e6631f99 ;
-  rdfs:label "Tove Jansson"@es, "توفي يانسون"@ar, "Туве Янсон"@bg, "Tove Janssonová"@cs ;
-  sdo:birthDate "+1914-08-09"^^xsd:date
-      ~ wdref:f6f7cdf3b7dec9923484fbbd5daee432400b9c0e
-      ~ wdref:d682ef906ae51801222e28f655ef92298ceecf26
-      ~ wdref:d487201e3d7abd6d49f0f60c8403480a96a90bec ;
-  sdo:deathDate "+2001-06-27"^^xsd:date
-      ~ wdref:f6f7cdf3b7dec9923484fbbd5daee432400b9c0e
-      ~ wdref:d682ef906ae51801222e28f655ef92298ceecf26 ;
   sdo:image <https://commons.wikimedia.org/wiki/Special:FilePath/Tove-Jansson-1956b.jpg> ;
   :imageOfGrave_P1442 <https://commons.wikimedia.org/wiki/Special:FilePath/Gr%C3%B3b%20Tove%20Jansson.jpg> ;
-  :isni_P213 "0000000121478925"
-      {| a :Qualification ; :subjectNamedAs_P1810 "Jansson, Tove" |}
+  :isni_P213 "0000 0004 8444 8792" {| a :Qualification ;
+        :pseudonym_P742 "Haij, Vera"
+      |} ,
+    "0000000121478925"
+      {| a :Qualification ;
+        :subjectNamedAs_P1810 "Jansson, Tove"
+      |}
       ~ wdref:fbc824608bf047fcbfb803c1b0f98e66f4372207 ,
-    "0000 0004 8444 8792" {| a :Qualification ; :pseudonym_P742 "Haij, Vera" |} .
-    "0000000484448792" {| a :Qualification ; :pseudonym_P742 "Haij, Vera" |} ;
+    "0000000484448792" {| a :Qualification ;
+        :pseudonym_P742 "Haij, Vera"
+      |} ;
+  sdo:birthDate "+1914-08-09"^^xsd:date
+      ~ wdref:d487201e3d7abd6d49f0f60c8403480a96a90bec
+      ~ wdref:d682ef906ae51801222e28f655ef92298ceecf26
+      ~ wdref:f6f7cdf3b7dec9923484fbbd5daee432400b9c0e ;
+  sdo:deathDate "+2001-06-27"^^xsd:date
+      ~ wdref:d682ef906ae51801222e28f655ef92298ceecf26
+      ~ wdref:f6f7cdf3b7dec9923484fbbd5daee432400b9c0e .
 
 wdref:8566348fa77729d56b55c24bd29f18f5e6631f99 a wikibase:Reference ;
   :statedIn_P248 <http://www.wikidata.org/entity/Q104089764> .
@@ -76,6 +91,7 @@ wdref:d487201e3d7abd6d49f0f60c8403480a96a90bec a wikibase:Reference ;
   :isoSpeed_P6789 50 ;
   sdo:encodingFormat "image/jpeg" .
 ```
+(Note that the above uses the "multiple annotations" option for providing statement qualification and reference information as distinct annotations.)
 
 ### Usage
 
