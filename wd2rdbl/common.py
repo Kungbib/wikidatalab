@@ -5,6 +5,7 @@ ANNOTATION = '@annotation'
 
 DCT = "http://purl.org/dc/terms/"
 SDO = 'https://schema.org/'
+PROV = 'http://www.w3.org/ns/prov#'
 
 DEFAULT_CONTEXT = {
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
@@ -16,8 +17,10 @@ DEFAULT_CONTEXT = {
     "dct": "http://purl.org/dc/terms/"
 }
 
+WIKIBASE = "http://wikiba.se/ontology#"
 WD = "http://www.wikidata.org/entity/"
 WD_STMT = "http://www.wikidata.org/entity/statement/"
+WD_REF = "http://www.wikidata.org/reference/"
 WDCOMMONS = "http://commons.wikimedia.org/entity/"
 WD_DATA = "https://www.wikidata.org/wiki/Special:EntityData/"
 

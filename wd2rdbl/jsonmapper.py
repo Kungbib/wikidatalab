@@ -3,6 +3,8 @@ from urllib.parse import quote, urljoin
 
 from .common import *
 
+REFERENCE = 'prov:wasDerivedFrom'
+
 
 class Mapper:
 
@@ -10,17 +12,25 @@ class Mapper:
     prefixes: dict[str, str]
     term_map: dict[str, str]
     nest_annotations: bool
-    nest_quoted: bool
+    multiple_annotations: bool
 
-    def __init__(self, vocmap: dict, nest_annotations=False, nest_quoted=False):
+    def __init__(
+        self, vocmap: dict, nest_annotations=False, multiple_annotations=False
+    ):
         self.base = WD
-        self.prefixes = DEFAULT_CONTEXT | {'s': WD_STMT, VOCAB: WD2RDBL}
+        self.prefixes = DEFAULT_CONTEXT | {
+            'prov': PROV,
+            'wikibase': WIKIBASE,
+            'wds': WD_STMT,
+            'wdref': WD_REF,
+            VOCAB: WD2RDBL
+        }
         self.term_map = {
             (term.split(':', 1)[-1]): dfn['matches']
             for term, dfn in vocmap['terms'].items()
         }
         self.nest_annotations = nest_annotations
-        self.nest_quoted = nest_quoted
+        self.multiple_annotations = multiple_annotations
 
     def to_readable(self, data: dict) -> dict:
         items: list[dict] = data['entities'].values() if 'entities' in data else [data]
@@ -66,23 +76,64 @@ class Mapper:
             else:
                 entity['dct:title'] = title
 
-        nested = []
+        nested = {}
 
         def _process_annotations(entity_id, prop, o):
             if not isinstance(o, dict):
                 return o
 
-            if not self.nest_quoted and '@quoted' in o and ANNOTATION in o:
+            if '_quoted' in o and ANNOTATION in o:
                 triple = {ID: entity_id}
-                reif = o[ANNOTATION]
-                reif_id = reif[ID]
-                reif |= {'@triple': triple, ID: reif_id}
-                triple[prop] = o['@quoted']
-                nested.append(reif)
+                triple[prop] = o['_quoted']
+
+                annots = o.pop(ANNOTATION)
+                for reif in annots:
+                    reif['@reifies'] = [triple]
+                    if ID in reif:
+                        if reif[ID] in nested:
+                            assert all(
+                                nested[reif[ID]][k] == v for k, v in reif.items()
+                                if k != '@reifies'
+                            )
+                            triples = nested[reif[ID]].setdefault('@reifies', [])
+                            triples.append(triple)
+                        else:
+                            nested[reif[ID]] = reif
+                    else:
+                        nested[str(id(reif))] = reif
+
                 return None
-            elif not self.nest_annotations and ANNOTATION in o:
-                nested.append(o[ANNOTATION])
-                o[ANNOTATION] = {ID: o[ANNOTATION][ID]}
+
+            elif ANNOTATION in o:
+                if not self.multiple_annotations:
+                    annot = o[ANNOTATION] = o[ANNOTATION][0]
+                    if not self.nest_annotations and ID in annot:
+                        nested[annot[ID]] = annot
+                        o[ANNOTATION] = {ID: annot[ID]}
+                    if REFERENCE in annot:
+                        refs = []
+                        for ref in annot.pop(REFERENCE):
+                            if ID in ref:
+                                if ref[ID] in nested:
+                                    assert nested[ref[ID]] == ref
+                                nested[ref[ID]] = ref
+                                refs.append({ID: ref[ID]})
+                        annot[REFERENCE] = refs
+                elif not self.nest_annotations:
+                    annots = []
+                    for annot in o[ANNOTATION]:
+                        if ID in annot:
+                            if annot[ID] in nested:
+                                assert all(
+                                    nested[annot[ID]][k] == v for k, v in annot.items()
+                                )
+                            else:
+                                nested[annot[ID]] = annot
+                            annots.append({ID: annot[ID]})
+                        else:
+                            annots.append(annot)
+                    o[ANNOTATION] = annots
+
 
             return o
 
@@ -90,7 +141,7 @@ class Mapper:
             entity[prop] = [o2 for o in objects if (o2 := _process_annotations(entity[ID], prop, o))]
 
         if nested:
-            entity['@nested'] = nested
+            entity['@nested'] = list(nested.values())
 
         revs["sdo:mainEntity"] = {
             ID: urljoin(WD_DATA, qid),
@@ -127,18 +178,12 @@ class Mapper:
         rank = qvalue.get('rank')
         if qvalue['mainsnak']['snaktype'] != 'novalue':
             obj = self._to_object(
+                qvalue['id'],
                 qvalue['mainsnak'],
                 qvalue.get('references'),
                 qvalue.get('qualifiers'),
                 rank
             )
-
-            if isinstance(obj, dict) and ANNOTATION in obj:
-                stmt = {
-                    TYPE: 'Circumstance',
-                    ID: 's:' + qvalue['id'].replace('$', '-')
-                }
-                obj[ANNOTATION] = stmt | obj[ANNOTATION]
 
             return obj
 
@@ -146,6 +191,7 @@ class Mapper:
 
     def _to_object(
         self,
+        snak_id: str,
         snak: dict,
         references: list | None,
         qualifiers: dict | None,
@@ -164,23 +210,48 @@ class Mapper:
                 o = {VALUE: o}
 
             if rank == 'deprecated':
-                o = {'@quoted': o}
+                o = {'_quoted': o}
 
-            reifier: dict = {}
+            reifiers: list[dict] = []
 
             if qualifiers:
-                reifier |= self._map_reference(qualifiers)
+                qualifier = {"@type": "Qualification"} | self._map_reference(qualifiers)
+                reifiers.append(qualifier)
+
+            if rank:
+                stmt = {}
+                stmt['wikibase:rank'] = {ID: f'wikibase:{rank.title()}Rank'}
+                reifiers.append(stmt)
+
+            if not self.multiple_annotations:
+                stmt = {
+                    TYPE: 'wikibase:Statement',
+                    ID: f"wds:{snak_id.replace('$', '-')}"
+                }
+                for rei in reifiers:
+                    stmt |= rei
+                if stmt:
+                    reifiers = []
+            else:
+                stmt = {}
 
             if references:
-                reifier['reference'] = [
-                    self._map_reference(it['snaks'])
+                refs =  [
+                    {
+                        "@type": "wikibase:Reference",
+                        "@id": f"wdref:{it['hash']}"
+                    } | self._map_reference(it['snaks'])
                     for it in references
                 ]
+                reifiers += refs
 
-            if reifier:
-                if rank:
-                    reifier['rank'] = {ID: WD2RDBL + rank.title()}
-                o[ANNOTATION] = reifier
+            if not self.multiple_annotations:
+                o[ANNOTATION] = [stmt]
+                if reifiers:
+                    stmt[REFERENCE] = reifiers
+            else:
+                if reifiers:
+                    o[ANNOTATION] = reifiers
 
         return o
 
@@ -221,8 +292,22 @@ class Mapper:
                         return {TYPE: self._to_symbol(unit), 'rdf:value': v}
 
             case 'time':
-                dt_type = 'xsd:dateTime'  # TODO: map 'calendarmodel'!
-                return {VALUE: value['time'], TYPE: self._to_symbol(dt_type)}
+                tvalue = value['time']
+                if value["calendarmodel"] == 'http://www.wikidata.org/entity/Q1985727':
+                    sign = tvalue[0]
+                    tvalue, time = tvalue[1:].split('T')
+                    parts = tvalue.split('-')
+                    if value["precision"] < 11:
+                        dt_type = 'xsd:gYear'
+                        tvalue = sign + parts[0]
+                    elif value["precision"] == 11:
+                        dt_type = 'xsd:date'
+                        tvalue = f"{sign}{parts[0]}-{parts[1]}-{parts[2]}"
+                    else:
+                        dt_type = 'xsd:dateTime'
+                else:
+                    dt_type = value["calendarmodel"]   # TODO: map other ...
+                return {VALUE: tvalue, TYPE: self._to_symbol(dt_type)}
 
             case 'globecoordinate':
                 return {
@@ -273,7 +358,7 @@ if __name__ == '__main__':
     with open(Path(__file__).parent.parent / 'cache' / 'vocmap.jsonld') as f:
         vocmap = json.load(f)
 
-    mapper = Mapper(vocmap, args.nest_annotations, args.nest_quoted)
+    mapper = Mapper(vocmap, args.nest_annotations, args.multiple_annotations)
 
     data = json.load(sys.stdin)
     result = mapper.to_readable(data)

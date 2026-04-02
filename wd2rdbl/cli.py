@@ -57,7 +57,7 @@ def main():
     with open(Path(__file__).parent.parent / 'cache' / 'vocmap.jsonld') as f:
         vocmap = json.load(f)
 
-    mapper = Mapper(vocmap, args.nest_annotations, args.nest_quoted)
+    mapper = Mapper(vocmap, args.nest_annotations, args.multiple_annotations)
 
     ds_map = {}
     for source in args.sources:
