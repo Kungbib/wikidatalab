@@ -1,0 +1,8 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+CONSTRUCT {
+  << ?s ?p ?o ~ ?set >> prov:wasDerivedFrom ?ref .
+} WHERE {
+  ?s ?p ?o {| prov:wasDerivedFrom ?ref |}
+  BIND(BNODE(MD5(CONCAT(STR(?ref), STR(NOW())))) AS ?set)
+}

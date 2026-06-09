@@ -1,0 +1,23 @@
+prefix foaf: <http://xmlns.com/foaf/0.1/>
+prefix prov: <http://www.w3.org/ns/prov#>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+BASE <http://wikibase.example.org/>
+
+<rev1> a wikibase:Revision ;
+  prov:wasAttributedTo <User:123> ;
+  wikibase:addition <<( wd:Q102071 a foaf:Person )>> ;
+  wikibase:addition <<( wd:Q102071 foaf:name "Tove Jansson" )>> .
+
+<rev2> a wikibase:Revision ;
+  prov:wasAttributedTo <User:456> ;
+  wikibase:addition <<( wd:Q102071 foaf:givenName "Tove" )>> ;
+  wikibase:addition <<( wd:Q102071 foaf:familyName "Jansson" )>> ;
+  wikibase:removal <<( wd:Q102071 foaf:name "Tove Jansson" )>> .
+
+<rev3> a wikibase:Revision ;
+  prov:wasAttributedTo <User:123> ;
+  wikibase:addition <<( wd:Q102071 foaf:familyName "Janssonová"@cs )>> ;
+  wikibase:addition <<( wd:Q102071 foaf:givenName "Tove" )>> ;
+  wikibase:removal <<( wd:Q102071 foaf:givenName "Tove"@fi )>> .
+
